@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Finance Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+        .message-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-6xl space-y-8">
+        <h1 class="text-4xl font-bold text-center text-gray-800">Finance Assistant</h1>
+
+        <!-- User Preferences -->
+        <div class="space-y-4 bg-gray-50 p-6 rounded-2xl shadow-md">
+            <h2 class="text-2xl font-semibold text-gray-700">Your Preferences</h2>
+            <p id="preferencesDisplay" class="text-center text-gray-400">Please enter your family details and first income to get started.</p>
+            <div class="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4 justify-around items-center">
+                <div class="flex items-center space-x-4">
+                    <label for="adults" class="text-gray-600">Number of Adults:</label>
+                    <input type="number" id="adults" placeholder="e.g., 2" class="w-20 p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex items-center space-x-4">
+                    <label for="children" class="text-gray-600">Number of Children:</label>
+                    <input type="number" id="children" placeholder="e.g., 2" class="w-20 p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex items-center space-x-4">
+                    <label for="seniorCitizens" class="text-gray-600">Senior Citizens:</label>
+                    <input type="number" id="seniorCitizens" placeholder="e.g., 1" class="w-20 p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div class="bg-green-100 p-6 rounded-2xl shadow-md">
+                <h2 class="text-xl font-semibold text-gray-700">Total Income</h2>
+                <p id="totalIncome" class="text-3xl font-bold text-green-600 mt-2">₹0.00</p>
+            </div>
+            <div class="bg-red-100 p-6 rounded-2xl shadow-md">
+                <h2 class="text-xl font-semibold text-gray-700">Total Expenses</h2>
+                <p id="totalExpenses" class="text-3xl font-bold text-red-600 mt-2">₹0.00</p>
+            </div>
+            <div class="bg-blue-100 p-6 rounded-2xl shadow-md">
+                <h2 class="text-xl font-semibold text-gray-700">Net Income</h2>
+                <p id="netIncome" class="text-3xl font-bold text-blue-600 mt-2">₹0.00</p>
+            </div>
+        </div>
+        
+        <!-- Main Content Grid for Laptops -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Column: Inputs -->
+            <div class="space-y-8">
+                <!-- Add New Transaction Form -->
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-semibold text-gray-700">Add Transaction</h2>
+                    <div class="flex items-center space-x-4">
+                        <label for="type" class="text-gray-600">Type:</label>
+                        <select id="type" class="flex-grow p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <input type="text" id="category" placeholder="Category (e.g., salary, groceries)" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" id="amount" placeholder="Amount" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="addBtn" class="w-full p-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-md">Add Transaction</button>
+                </div>
+
+                <!-- Set Budget Form -->
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-semibold text-gray-700">Set Budget</h2>
+                    <input type="text" id="budgetCategory" placeholder="Category (e.g., groceries)" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" id="budgetAmount" placeholder="Budget Amount" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="setBudgetBtn" class="w-full p-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-md">Set Budget</button>
+                </div>
+            </div>
+
+            <!-- Right Column: Outputs & History -->
+            <div class="space-y-8">
+                <!-- Recommendations from AI -->
+                <div class="bg-gray-50 p-6 rounded-2xl shadow-md space-y-4">
+                    <h2 class="text-2xl font-semibold text-gray-700">AI Recommendations</h2>
+                    <div id="recommendationsList" class="space-y-2 text-gray-600">
+                        <p>No recommendations yet. Add some data to get started!</p>
+                    </div>
+                </div>
+
+                <!-- Budgets List -->
+                <div class="bg-gray-50 p-6 rounded-2xl shadow-md space-y-4">
+                    <h2 class="text-2xl font-semibold text-gray-700">Your Budgets</h2>
+                    <div id="budgetsList" class="space-y-2 text-gray-600 h-40 overflow-y-auto">
+                        <p class="text-center text-gray-400">No budgets set yet.</p>
+                    </div>
+                </div>
+
+                <!-- Transaction List -->
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-semibold text-gray-700">Transaction History</h2>
+                    <div id="transactionsList" class="bg-gray-50 p-6 rounded-2xl shadow-md h-80 overflow-y-auto">
+                        <!-- Transactions will be added here dynamically -->
+                        <p class="text-center text-gray-400">Your transactions will appear here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reset Button -->
+        <div class="flex justify-center mt-8">
+            <button id="resetBtn" class="p-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors shadow-md">Reset All Data</button>
+        </div>
+    </div>
+
+    <!-- Custom message box -->
+    <div id="messageOverlay" class="hidden message-overlay"></div>
+    <div id="messageBox" class="hidden message-box">
+        <h3 id="messageTitle" class="text-2xl font-bold mb-2"></h3>
+        <p id="messageText" class="text-gray-700 mb-4"></p>
+        <button id="closeMessageBtn" class="p-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors shadow-md">Close</button>
+    </div>
+    
+    <!-- Confirmation Modal for Reset -->
+    <div id="confirmationModalOverlay" class="hidden message-overlay"></div>
+    <div id="confirmationModal" class="hidden message-box">
+        <h3 class="text-2xl font-bold mb-2">Confirm Reset</h3>
+        <p class="text-gray-700 mb-4">Are you sure you want to delete all your financial data? This action cannot be undone.</p>
+        <div class="flex justify-center space-x-4">
+            <button id="cancelResetBtn" class="p-3 bg-gray-300 text-gray-800 rounded-xl font-semibold hover:bg-gray-400 transition-colors shadow-md">Cancel</button>
+            <button id="confirmResetBtn" class="p-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors shadow-md">Confirm Reset</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // The data structure to simulate the Prolog knowledge base.
+            let facts = JSON.parse(localStorage.getItem('financialFacts')) || {
+                income: [],
+                expense: []
+            };
+
+            // A new data structure for budgets.
+            let budgets = JSON.parse(localStorage.getItem('financialBudgets')) || {};
+            
+            // New data structure for user preferences.
+            let preferences = JSON.parse(localStorage.getItem('userPreferences')) || {
+                adults: null,
+                children: null,
+                seniorCitizens: null
+            };
+
+            const totalIncomeEl = document.getElementById('totalIncome');
+            const totalExpensesEl = document.getElementById('totalExpenses');
+            const netIncomeEl = document.getElementById('netIncome');
+            const recommendationsList = document.getElementById('recommendationsList');
+            const transactionsList = document.getElementById('transactionsList');
+            const budgetsList = document.getElementById('budgetsList');
+
+            const typeEl = document.getElementById('type');
+            const categoryEl = document.getElementById('category');
+            const amountEl = document.getElementById('amount');
+            const addBtn = document.getElementById('addBtn');
+            
+            const budgetCategoryEl = document.getElementById('budgetCategory');
+            const budgetAmountEl = document.getElementById('budgetAmount');
+            const setBudgetBtn = document.getElementById('setBudgetBtn');
+            
+            const resetBtn = document.getElementById('resetBtn');
+            const adultsEl = document.getElementById('adults');
+            const childrenEl = document.getElementById('children');
+            const seniorCitizensEl = document.getElementById('seniorCitizens');
+            const preferencesDisplay = document.getElementById('preferencesDisplay');
+
+            const messageOverlay = document.getElementById('messageOverlay');
+            const messageBox = document.getElementById('messageBox');
+            const messageTitle = document.getElementById('messageTitle');
+            const messageText = document.getElementById('messageText');
+            const closeMessageBtn = document.getElementById('closeMessageBtn');
+            
+            const confirmationModalOverlay = document.getElementById('confirmationModalOverlay');
+            const confirmationModal = document.getElementById('confirmationModal');
+            const cancelResetBtn = document.getElementById('cancelResetBtn');
+            const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+            // Save facts to local storage
+            function saveFacts() {
+                localStorage.setItem('financialFacts', JSON.stringify(facts));
+            }
+
+            // Save budgets to local storage
+            function saveBudgets() {
+                localStorage.setItem('financialBudgets', JSON.stringify(budgets));
+            }
+            
+            // Save preferences to local storage
+            function savePreferences() {
+                localStorage.setItem('userPreferences', JSON.stringify(preferences));
+            }
+
+            // Function to show a custom message box
+            function showMessage(title, message) {
+                messageTitle.textContent = title;
+                messageText.textContent = message;
+                messageOverlay.classList.remove('hidden');
+                messageBox.classList.remove('hidden');
+            }
+            
+            // Function to show the confirmation modal
+            function showConfirmationModal() {
+                confirmationModalOverlay.classList.remove('hidden');
+                confirmationModal.classList.remove('hidden');
+            }
+            
+            // Function to calculate and set initial budgets based on preferences
+            function setInitialBudgetAndSavings() {
+                const totalIncome = prologManager.queryTotalIncome();
+                if (totalIncome > 0) {
+                    const numAdults = preferences.adults || 0;
+                    const numChildren = preferences.children || 0;
+                    const numSeniorCitizens = preferences.seniorCitizens || 0;
+                    
+                    // Base percentages for one adult
+                    let savingsPercentage = 0.25;
+                    let groceriesPercentage = 0.20;
+                    let utilitiesPercentage = 0.05;
+                    let clothingPercentage = 0.03;
+                    let transportationPercentage = 0.05;
+                    let schoolFeesPercentage = 0.0;
+                    let medicationPercentage = 0.0;
+                    
+                    // Adjust for additional adults
+                    if (numAdults > 1) {
+                        const additionalAdults = numAdults - 1;
+                        groceriesPercentage += additionalAdults * 0.05;
+                        transportationPercentage += additionalAdults * 0.03;
+                        savingsPercentage -= additionalAdults * 0.03;
+                    }
+
+                    // Adjust for children
+                    if (numChildren > 0) {
+                        groceriesPercentage += numChildren * 0.03;
+                        clothingPercentage += numChildren * 0.02;
+                        schoolFeesPercentage += numChildren * 0.05;
+                        savingsPercentage -= numChildren * 0.05;
+                    }
+
+                    // Adjust for senior citizens
+                    if (numSeniorCitizens > 0) {
+                        groceriesPercentage += numSeniorCitizens * 0.02;
+                        medicationPercentage += numSeniorCitizens * 0.05;
+                        savingsPercentage -= numSeniorCitizens * 0.02;
+                    }
+
+                    // Ensure savings percentage doesn't drop too low
+                    if (savingsPercentage < 0.05) savingsPercentage = 0.05;
+                    
+                    const savingsAmount = totalIncome * savingsPercentage;
+                    const groceriesAmount = totalIncome * groceriesPercentage;
+                    const utilitiesAmount = totalIncome * utilitiesPercentage;
+                    const clothingAmount = totalIncome * clothingPercentage;
+                    const transportationAmount = totalIncome * transportationPercentage;
+                    const schoolFeesAmount = totalIncome * schoolFeesPercentage;
+                    const medicationAmount = totalIncome * medicationPercentage;
+                    
+                    budgets = {
+                        "savings": savingsAmount,
+                        "groceries": groceriesAmount,
+                        "utilities": utilitiesAmount,
+                        "clothing": clothingAmount,
+                        "transportation": transportationAmount
+                    };
+
+                    if (numChildren > 0) {
+                        budgets["school fees"] = schoolFeesAmount;
+                    }
+                    if (numSeniorCitizens > 0) {
+                        budgets["medication"] = medicationAmount;
+                    }
+
+                    saveBudgets();
+                    let message = `Based on your family size, the following budgets have been set automatically: `;
+                    message += `Savings: ₹${savingsAmount.toFixed(2)}, `;
+                    message += `Groceries: ₹${groceriesAmount.toFixed(2)}, `;
+                    message += `Utilities: ₹${utilitiesAmount.toFixed(2)}, `;
+                    message += `Clothing: ₹${clothingAmount.toFixed(2)}, `;
+                    message += `Transportation: ₹${transportationAmount.toFixed(2)}.`;
+                    if (numChildren > 0) {
+                        message += ` School Fees: ₹${schoolFeesAmount.toFixed(2)}.`;
+                    }
+                    if (numSeniorCitizens > 0) {
+                        message += ` Medication: ₹${medicationAmount.toFixed(2)}.`;
+                    }
+                    
+                    showMessage("Budgets Set!", message);
+                }
+            }
+
+            // A class to simulate the Prolog logic.
+            // In a real application, this logic would be on a server
+            // and the UI would make API calls to it.
+            class PrologManager {
+                constructor(data) {
+                    this.data = data;
+                }
+
+                // Simulates a Prolog query to get total income.
+                queryTotalIncome() {
+                    const total = this.data.income.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+                    return total;
+                }
+
+                // Simulates a Prolog query to get total expenses.
+                queryTotalExpenses() {
+                    const total = this.data.expense.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+                    return total;
+                }
+
+                // Simulates a Prolog query to get net income.
+                queryNetIncome() {
+                    return this.queryTotalIncome() - this.queryTotalExpenses();
+                }
+
+                // Simulates a Prolog rule to get financial recommendations.
+                getRecommendations() {
+                    const recs = [];
+                    const netIncome = this.queryNetIncome();
+                    const totalExpenses = this.queryTotalExpenses();
+                    const totalIncome = this.queryTotalIncome();
+                    
+                    if (totalIncome === 0) {
+                        return ["Please add your income and family members to get started."];
+                    }
+
+                    if (netIncome < 0) {
+                        recs.push("Your expenses are higher than your income. You should create a budget.");
+                    } else if (netIncome === 0) {
+                        recs.push("You are breaking even. Consider a small increase in income or a small cut in expenses to start saving.");
+                    } else if (netIncome > 0 && netIncome < 200) {
+                        recs.push("Your net income is positive but small. Look for areas to save or increase your income to build a larger safety net.");
+                    } else if (netIncome >= 200) {
+                        recs.push("Great job! Your net income is healthy. Consider setting a savings goal for a specific purpose.");
+                    }
+
+                    // Check for high expenses in a specific category
+                    this.data.expense.forEach(item => {
+                        // Check if a single expense is a large percentage of total expenses.
+                        if (parseFloat(item.amount) / totalExpenses > 0.3) {
+                            recs.push(`The expense for "${item.category}" is a large portion of your budget. Consider finding ways to reduce it.`);
+                        }
+                    });
+
+                    // NEW RECOMMENDATION: Check for high "other" expenses
+                    const otherExpenses = this.data.expense
+                        .filter(item => item.category.toLowerCase() === 'other')
+                        .reduce((sum, item) => sum + parseFloat(item.amount), 0);
+                    
+                    if (otherExpenses / totalExpenses > 0.15) { // If "other" is more than 15% of total expenses
+                        recs.push("Your 'other' expenses are a significant portion of your budget. To manage this, we suggest a few actions: 1. Review your bank statements or receipts to identify what those expenses are. 2. Create more specific categories for recurring 'other' costs like 'Subscriptions' or 'Hobbies.' 3. Temporarily set a specific budget for the 'other' category until you can better track those expenses.");
+                    }
+
+                    return recs;
+                }
+            }
+
+            const prologManager = new PrologManager(facts);
+
+            // Function to calculate total spent for a specific category
+            function getTotalSpent(category) {
+                return facts.expense
+                    .filter(item => item.category.toLowerCase() === category.toLowerCase())
+                    .reduce((sum, item) => sum + parseFloat(item.amount), 0);
+            }
+            
+            // Function to update user preferences display
+            function updatePreferencesDisplay() {
+                const numAdults = preferences.adults;
+                const numChildren = preferences.children;
+                const numSeniorCitizens = preferences.seniorCitizens;
+                if (numAdults !== null && numChildren !== null && numSeniorCitizens !== null) {
+                    preferencesDisplay.textContent = `Adults: ${numAdults}, Children: ${numChildren}, Senior Citizens: ${numSeniorCitizens}`;
+                } else {
+                    preferencesDisplay.textContent = `Please enter the number of adults, children, and senior citizens to unlock automatic budgeting.`;
+                }
+            }
+
+            // Function to update the UI
+            function updateUI() {
+                const totalIncome = prologManager.queryTotalIncome();
+                const totalExpenses = prologManager.queryTotalExpenses();
+                const netIncome = prologManager.queryNetIncome();
+                const recommendations = prologManager.getRecommendations();
+
+                totalIncomeEl.textContent = `₹${totalIncome.toFixed(2)}`;
+                totalExpensesEl.textContent = `₹${totalExpenses.toFixed(2)}`;
+                netIncomeEl.textContent = `₹${netIncome.toFixed(2)}`;
+                
+                updatePreferencesDisplay();
+
+                // Update recommendations list
+                recommendationsList.innerHTML = '';
+                if (recommendations.length > 0) {
+                    recommendations.forEach(rec => {
+                        const p = document.createElement('p');
+                        p.textContent = `• ${rec}`;
+                        recommendationsList.appendChild(p);
+                    });
+                } else {
+                    recommendationsList.innerHTML = `<p class="text-center text-gray-400">No recommendations yet. Add some data!</p>`;
+                }
+
+                // Update budgets list
+                budgetsList.innerHTML = '';
+                if (Object.keys(budgets).length > 0) {
+                    for (const category in budgets) {
+                        const totalSpent = getTotalSpent(category);
+                        const budgetAmount = budgets[category];
+                        const remaining = budgetAmount - totalSpent;
+
+                        const div = document.createElement('div');
+                        div.className = 'p-3 bg-gray-100 rounded-lg shadow-inner';
+                        div.innerHTML = `
+                            <div class="flex justify-between font-semibold">
+                                <span>${category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                                <span>₹${totalSpent.toFixed(2)} / ₹${budgetAmount.toFixed(2)}</span>
+                            </div>
+                            <div class="w-full h-2 bg-gray-300 rounded-full mt-2">
+                                <div class="h-full rounded-full ${remaining < 0 ? 'bg-red-500' : 'bg-green-500'}" style="width: ${(totalSpent / budgetAmount) * 100 > 100 ? 100 : (totalSpent / budgetAmount) * 100}%;"></div>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">${remaining < 0 ? `You are over budget by ₹${Math.abs(remaining).toFixed(2)}` : `₹${remaining.toFixed(2)} remaining`}</p>
+                        `;
+                        budgetsList.appendChild(div);
+                    }
+                } else {
+                    budgetsList.innerHTML = `<p class="text-center text-gray-400">No budgets set yet.</p>`;
+                }
+
+
+                // Update transactions list
+                transactionsList.innerHTML = '';
+                if (facts.income.length === 0 && facts.expense.length === 0) {
+                    transactionsList.innerHTML = `<p class="text-center text-gray-400">Your transactions will appear here.</p>`;
+                } else {
+                    [...facts.income, ...facts.expense].forEach(item => {
+                        const div = document.createElement('div');
+                        const amountText = item.type === 'income' ? `+₹${item.amount}` : `-₹${item.amount}`;
+                        const colorClass = item.type === 'income' ? 'text-green-600' : 'text-red-600';
+                        div.className = 'flex justify-between items-center p-2 border-b border-gray-200 last:border-b-0';
+                        div.innerHTML = `
+                            <span class="text-gray-700 font-medium capitalize">${item.category} (${item.type})</span>
+                            <span class="font-semibold ${colorClass}">${amountText}</span>
+                        `;
+                        transactionsList.appendChild(div);
+                    });
+                }
+            }
+            
+            // Event listeners for family member inputs
+            adultsEl.addEventListener('change', () => {
+                const numAdults = parseInt(adultsEl.value);
+                if (!isNaN(numAdults) && numAdults >= 0) {
+                    preferences.adults = numAdults;
+                    savePreferences();
+                    updatePreferencesDisplay();
+                }
+            });
+
+            childrenEl.addEventListener('change', () => {
+                const numChildren = parseInt(childrenEl.value);
+                if (!isNaN(numChildren) && numChildren >= 0) {
+                    preferences.children = numChildren;
+                    savePreferences();
+                    updatePreferencesDisplay();
+                }
+            });
+            
+            seniorCitizensEl.addEventListener('change', () => {
+                const numSeniorCitizens = parseInt(seniorCitizensEl.value);
+                if (!isNaN(numSeniorCitizens) && numSeniorCitizens >= 0) {
+                    preferences.seniorCitizens = numSeniorCitizens;
+                    savePreferences();
+                    updatePreferencesDisplay();
+                }
+            });
+
+            // Event listener for adding a new transaction
+            addBtn.addEventListener('click', () => {
+                if (preferences.adults === null || preferences.children === null || preferences.seniorCitizens === null) {
+                    showMessage("Missing Preferences", "Please enter the number of adults, children, and senior citizens before adding a transaction.");
+                    return;
+                }
+
+                const type = typeEl.value;
+                const category = categoryEl.value.trim().toLowerCase();
+                const amount = parseFloat(amountEl.value);
+
+                if (category && !isNaN(amount) && amount > 0) {
+                    facts[type].push({ type, category, amount });
+                    saveFacts();
+                    
+                    if (type === 'income' && Object.keys(budgets).length === 0) {
+                         setInitialBudgetAndSavings();
+                    }
+                    
+                    // Check if a budget exists for this expense and if it's exceeded
+                    if (type === 'expense' && budgets[category]) {
+                        const totalSpent = getTotalSpent(category);
+                        if (totalSpent > budgets[category]) {
+                            showMessage(
+                                "Budget Exceeded!", 
+                                `You have spent ₹${totalSpent.toFixed(2)} on "${category}", which is over your budget of ₹${budgets[category].toFixed(2)}.`
+                            );
+                        }
+                    }
+
+                    updateUI();
+                    categoryEl.value = '';
+                    amountEl.value = '';
+                } else {
+                    console.error('Invalid input. Please fill out all fields correctly.');
+                }
+            });
+
+            // Event listener for setting a new budget
+            setBudgetBtn.addEventListener('click', () => {
+                const budgetCategory = budgetCategoryEl.value.trim().toLowerCase();
+                const budgetAmount = parseFloat(budgetAmountEl.value);
+
+                if (budgetCategory && !isNaN(budgetAmount) && budgetAmount > 0) {
+                    budgets[budgetCategory] = budgetAmount;
+                    saveBudgets();
+                    updateUI();
+                    budgetCategoryEl.value = '';
+                    budgetAmountEl.value = '';
+                } else {
+                    console.error('Invalid input. Please enter a category and a valid amount.');
+                }
+            });
+            
+            // Event listener for showing the confirmation modal for reset
+            resetBtn.addEventListener('click', () => {
+                showConfirmationModal();
+            });
+            
+            // Event listener for confirming the reset
+            confirmResetBtn.addEventListener('click', () => {
+                // Clear all data
+                localStorage.removeItem('financialFacts');
+                localStorage.removeItem('financialBudgets');
+                localStorage.removeItem('userPreferences');
+                facts = { income: [], expense: [] };
+                budgets = {};
+                preferences = { adults: null, children: null, seniorCitizens: null };
+                
+                // Hide the modal and update the UI
+                confirmationModalOverlay.classList.add('hidden');
+                confirmationModal.classList.add('hidden');
+                adultsEl.value = '';
+                childrenEl.value = '';
+                seniorCitizensEl.value = '';
+                updateUI();
+                
+                showMessage("Success!", "All your financial data has been cleared.");
+            });
+            
+            // Event listener for canceling the reset
+            cancelResetBtn.addEventListener('click', () => {
+                confirmationModalOverlay.classList.add('hidden');
+                confirmationModal.classList.add('hidden');
+            });
+
+            // Event listener for closing the main message box
+            closeMessageBtn.addEventListener('click', () => {
+                messageOverlay.classList.add('hidden');
+                messageBox.classList.add('hidden');
+            });
+
+            // Initial UI update
+            updateUI();
+        });
+    </script>
+</body>
+</html>
